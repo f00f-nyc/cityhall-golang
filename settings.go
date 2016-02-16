@@ -53,6 +53,7 @@ func NewSettings(info CityHallInfo) (*Settings, error) {
 	settings.httpClient = &http.Client{
 		Jar: settings.cookieJar,
 	}
+	settings.Environments.parent = settings
 
 	return settings, nil
 }

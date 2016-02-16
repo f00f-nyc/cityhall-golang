@@ -17,6 +17,10 @@ type mockServer struct {
 	Body string
 	RequestBody string
 	User string
+
+	CityHall *httptest.Server
+	Test *testing.T
+	Settings *Settings
 }
 
 func log(str string) {
@@ -68,20 +72,63 @@ func (m *mockServer) createMockWithLogin(t *testing.T) *httptest.Server {
 						}
 					}
 
+					if len(m.RequestBody) > 0 {
+						request_bytes, _ := ioutil.ReadAll(r.Body)
+						r.Body.Close()
+						if m.RequestBody != string(request_bytes) {
+							t.Errorf("Invalid request body to %s: Expected '%s' but got '%s'", r.URL.Path, m.RequestBody, string(request_bytes))
+						}
+					}
+
 					if len(m.Body) > 0 {
 						fmt.Fprintln(w, m.Body)
 					} else {
-						fmt.Fprintln(w, "{\"Response\": \"Ok\"}")
+						fmt.Fprintln(w, `{"Response": "Ok"}`)
 					}
 				}
 			}))
 }
 
-func (m *mockServer) createSettingsAndServer(t *testing.T) (*Settings, *httptest.Server) {
-	cityhall := m.createMockWithLogin(t)
-	s, err := NewSettings(CityHallInfo{Url: cityhall.URL})
+func (m *mockServer) createHarness(t *testing.T) *Settings {
+	var err error
+	m.Test = t
+	m.CityHall = m.createMockWithLogin(t)
+	m.Settings, err = NewSettings(CityHallInfo{Url: m.CityHall.URL})
 	if err != nil {
 		t.Errorf("Got an error back creating settings")
 	}
-	return s, cityhall
+	return m.Settings
+}
+
+func (m *mockServer) testBadResultFailsGracefully(call func() error) {
+	m.CityHall.Close()
+
+	// all functions will fail
+	m.CityHall = httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, `{"Response": "Failure", "Message": "Unspecified test error"}`)
+			}))
+	m.Settings.Url = m.CityHall.URL
+	err := call()
+	if err == nil {
+		m.Test.Fatal("Expected error, but got none")
+	}
+	m.CityHall.Close()
+}
+
+func (m *mockServer) testCallFailsWhenLoggedOut(call func() error) {
+	m.CityHall = httptest.NewServer(
+		http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				m.Test.Fatal("Should not have had any calls to server")
+				fmt.Fprintln(w, `{"Response": "Failure", "Message": "Unspecified test error"}`)
+			}))
+
+	m.Settings.loggedIn = loggedOut
+	err := call()
+	if err == nil {
+		m.Test.Fatal("Exepected to get an error back from the server")
+	}
+	m.CityHall.Close()
 }

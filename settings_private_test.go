@@ -30,8 +30,9 @@ func TestGetDefaultEnvironment(t *testing.T) {
 }
 
 func TestEnsureLoggedIn(t *testing.T) {
-	s, c := (&mockServer{}).createSettingsAndServer(t)
-	defer c.Close()
+	harness := &mockServer{}
+	s := harness.createHarness(t)
+	defer harness.CityHall.Close()
 
 	err := s.ensureLoggedIn()
 	if err != nil {
