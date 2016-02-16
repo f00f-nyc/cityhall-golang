@@ -21,7 +21,7 @@ type Settings struct {
 
 	username string
 	passhash string
-	loggedIn bool
+	loggedIn state
 	syncObject sync.RWMutex
 	cookieJar *cookiejar.Jar
 	httpClient *http.Client
@@ -40,12 +40,11 @@ func NewSettings(info CityHallInfo) (*Settings, error) {
 		username = info.Username
 	}
 
-
 	settings := &Settings{
 		Url: info.Url,
 		username: username,
 		passhash: hash(info.Password),
-		loggedIn: false,
+		loggedIn: notYetLoggedIn,
 	}
 
 	if settings.cookieJar, err = cookiejar.New(nil); err != nil {
@@ -54,7 +53,6 @@ func NewSettings(info CityHallInfo) (*Settings, error) {
 	settings.httpClient = &http.Client{
 		Jar: settings.cookieJar,
 	}
-
 
 	return settings, nil
 }
@@ -76,7 +74,7 @@ func (s *Settings) GetValueOverride(path string, override string) (string, error
 }
 
 func (s *Settings) LoggedIn() bool {
-	return s.loggedIn
+	return s.loggedIn == loggedIn
 }
 
 func (s *Settings) UpdatePassword(password string) error {

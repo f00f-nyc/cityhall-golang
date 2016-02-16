@@ -26,4 +26,10 @@ func (p Rights) String() string {
 	return "Unknown"
 }
 
+type state int
 
+const (
+	notYetLoggedIn state = iota
+	loggedIn
+	loggedOut
+)

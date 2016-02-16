@@ -35,7 +35,6 @@ func (m *mockServer) createMockWithLogin(t *testing.T) *httptest.Server {
 	return httptest.NewServer(
 		http.HandlerFunc(
 			func (w http.ResponseWriter, r *http.Request) {
-
 				if r.URL.Path == "/auth/" && r.Method == "POST" {
 					//mock logging in.
 					request_bytes, err := ioutil.ReadAll(r.Body)
@@ -76,4 +75,13 @@ func (m *mockServer) createMockWithLogin(t *testing.T) *httptest.Server {
 					}
 				}
 			}))
+}
+
+func (m *mockServer) createSettingsAndServer(t *testing.T) (*Settings, *httptest.Server) {
+	cityhall := m.createMockWithLogin(t)
+	s, err := NewSettings(CityHallInfo{Url: cityhall.URL})
+	if err != nil {
+		t.Errorf("Got an error back creating settings")
+	}
+	return s, cityhall
 }

@@ -22,7 +22,14 @@ func (s *Settings) login() error {
 	if err != nil {
 		return err
 	}
-	return isResponseOkay(raw_resp.Body)
+	if err = isResponseOkay(raw_resp.Body); err != nil {
+		return err
+	}
+
+	s.syncObject.Lock()
+	s.loggedIn = loggedIn
+	s.syncObject.Unlock()
+	return nil
 }
 
 func (s *Settings) getDefaultEnvironment() error {
@@ -40,5 +47,22 @@ func (s *Settings) getDefaultEnvironment() error {
 		return valueOk
 	}
 	s.Environments.defaultEnvironment = value
+	return nil
+}
+
+func (s *Settings) ensureLoggedIn() error {
+	if s.loggedIn == loggedOut {
+		return cityhallError(fmt.Sprintf("User %s has already been logged out", s.username))
+	} else if s.loggedIn == loggedIn {
+		return nil
+	} else {
+		if err := s.login(); err != nil {
+			return err
+		}
+		if err := s.getDefaultEnvironment(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
