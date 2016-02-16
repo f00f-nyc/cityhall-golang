@@ -112,7 +112,7 @@ func (m *mockServer) testBadResultFailsGracefully(call func() error) {
 	m.Settings.Url = m.CityHall.URL
 	err := call()
 	if err == nil {
-		m.Test.Fatal("Expected error, but got none")
+		m.Test.Fatal("testBadResultFailsGracefully: Expected the call to generate an error, but got none")
 	}
 	m.CityHall.Close()
 }
@@ -128,7 +128,7 @@ func (m *mockServer) testCallFailsWhenLoggedOut(call func() error) {
 	m.Settings.loggedIn = loggedOut
 	err := call()
 	if err == nil {
-		m.Test.Fatal("Exepected to get an error back from the server")
+		m.Test.Fatal("testCallFailsWhenLoggedOut: Have logged out, and exepected the call to generate an error, but got none")
 	}
 	m.CityHall.Close()
 }

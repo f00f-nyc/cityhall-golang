@@ -8,25 +8,19 @@ import (
 	"fmt"
 )
 
-func isResponseOkay(body io.ReadCloser) error {
-	resp_bytes, err := ioutil.ReadAll(body)
-	body.Close()
-	if err != nil {
-		return err
-	}
-
+func isResponseOkay(body []byte) error {
 	type response struct {
 		Response, Message string
 	}
 	var resp response
-	if err = json.Unmarshal(resp_bytes, &resp); err != nil {
+	if err := json.Unmarshal(body, &resp); err != nil {
 		return err
 	}
 
 	if resp.Response != "Ok" {
-		err = cityhallError(resp.Message)
+		return cityhallError(resp.Message)
 	}
-	return err
+	return nil
 }
 
 func getValueFromResponse(body io.ReadCloser) (string, error) {

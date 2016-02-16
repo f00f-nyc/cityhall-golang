@@ -2,8 +2,6 @@ package cityhall
 
 import (
 	"fmt"
-	"net/http"
-	"bytes"
 )
 
 type EnvironmentRights struct {
@@ -25,20 +23,9 @@ func (e *Environments) Default() string {
 }
 
 func (e *Environments) SetDefault(defaultEnvironment string) error {
-	if err := e.parent.ensureLoggedIn(); err != nil {
-		return err
-	}
-
 	set_url := fmt.Sprintf("%s/auth/user/%s/default/", e.parent.Url, e.parent.username)
-	var json = []byte(fmt.Sprintf(`{"env":"%s"}`, defaultEnvironment))
-	req, _ := http.NewRequest("POST", set_url, bytes.NewBuffer(json))
-	req.Header.Set("Content-Type", "application/json")
-
-	raw_resp, err := e.parent.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	if err = isResponseOkay(raw_resp.Body); err != nil {
+	json := fmt.Sprintf(`{"env":"%s"}`, defaultEnvironment)
+	if _, err := e.parent.createCall("POST", set_url, json); err != nil {
 		return err
 	}
 
@@ -50,6 +37,12 @@ func (e *Environments) SetDefault(defaultEnvironment string) error {
 }
 
 func (e *Environments) Create(environment string) error {
+	create_url := fmt.Sprintf("%s/auth/env/%s/", e.parent.Url, environment)
+
+	if _, err := e.parent.createCall("POST", create_url, ""); err != nil {
+		return err
+	}
+
 	return nil
 }
 
