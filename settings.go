@@ -2,11 +2,9 @@ package cityhall
 
 import (
 	"net/http"
-	"io/ioutil"
 	"sync"
-	"net/url"
-	"encoding/json"
-	"io"
+	"net/http/cookiejar"
+	"os"
 )
 
 type CityHallInfo struct {
@@ -25,15 +23,40 @@ type Settings struct {
 	passhash string
 	loggedIn bool
 	syncObject sync.RWMutex
+	cookieJar *cookiejar.Jar
+	httpClient *http.Client
 }
 
 func NewSettings(info CityHallInfo) (*Settings, error) {
-	return &Settings{
+	var username, hostname string
+	var err error
+
+	if info.Username == "" {
+		if hostname, err = os.Hostname(); err != nil {
+			return nil, err
+		}
+		username = hostname
+	} else {
+		username = info.Username
+	}
+
+
+	settings := &Settings{
 		Url: info.Url,
-		username: info.Username,
-		passhash: info.Password,
+		username: username,
+		passhash: hash(info.Password),
 		loggedIn: false,
-	}, nil
+	}
+
+	if settings.cookieJar, err = cookiejar.New(nil); err != nil {
+		return nil, err
+	}
+	settings.httpClient = &http.Client{
+		Jar: settings.cookieJar,
+	}
+
+
+	return settings, nil
 }
 
 func (s *Settings) GetValueFull(path string, environment string, override string) (string, error) {
@@ -62,43 +85,4 @@ func (s *Settings) UpdatePassword(password string) error {
 
 func (s *Settings) Logout() error {
 	return nil
-}
-
-///////////////////////////////////////
-type cityhallError string
-
-func (c cityhallError) Error() string {
-	return string(c)
-}
-
-func isOkay(body io.ReadCloser) error {
-	resp_bytes, err := ioutil.ReadAll(body)
-	if err != nil {
-		return err
-	}
-
-	type response struct {
-		Response, Message string
-	}
-	var resp response
-	if err = json.Unmarshal(resp_bytes, &resp); err != nil {
-		return err
-	}
-
-	if resp.Response != "Ok" {
-		err = cityhallError(resp.Message)
-	}
-	return err
-}
-
-func (s *Settings) login() error {
-	auth_url := s.Url + "/auth/"
-	raw_resp, err := http.PostForm(auth_url, url.Values{"username": {s.username}, "passhash": {s.passhash}})
-	if err != nil {
-		return err
-	}
-//	if resp, err := ioutil.ReadAll(raw_resp.Body); err != nil {
-//		return err
-//	}
-	return isOkay(raw_resp.Body)
 }
