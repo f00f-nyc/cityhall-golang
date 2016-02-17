@@ -11,16 +11,12 @@ const (
 )
 
 func (p Permission) String() string {
-	if p & None == None {
-		return "None"
-	} else if p & Read == Read {
-		return "Read"
-	} else if p & ReadProtected == ReadProtected {
-		return "ReadProtected"
-	} else if p & Write == Write {
-		return "Write"
-	} else if p & Grant == Grant {
-		return "Grant"
+	switch p {
+		case None: return "None"
+		case Read: return "Read"
+		case ReadProtected: return "ReadProtected"
+		case Write: return "Write"
+		case Grant: return "Grant"
 	}
 
 	return "Unknown"
@@ -35,3 +31,17 @@ const (
 	loggedIn
 	loggedOut
 )
+
+type EnvironmentRight struct {
+	User string
+	Permission Permission
+}
+
+type EnvironmentRights []EnvironmentRight
+
+type UserRight struct {
+	Environment string
+	Permission Permission
+}
+
+type UserRights []UserRight

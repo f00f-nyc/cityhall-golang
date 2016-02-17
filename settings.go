@@ -54,6 +54,7 @@ func NewSettings(info CityHallInfo) (*Settings, error) {
 		Jar: settings.cookieJar,
 	}
 	settings.Environments.parent = settings
+	settings.Users.parent = settings
 
 	return settings, nil
 }

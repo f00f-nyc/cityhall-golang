@@ -5,13 +5,6 @@ import (
 	"encoding/json"
 )
 
-type EnvironmentRight struct {
-	User string
-	Permission Permission
-}
-
-type EnvironmentRights []EnvironmentRight
-
 type EnvironmentInfo struct {
 	Rights EnvironmentRights
 }
