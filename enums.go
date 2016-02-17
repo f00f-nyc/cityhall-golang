@@ -1,16 +1,16 @@
 package cityhall
 
-type Rights int
+type Permission int
 
 const (
-	None Rights = iota
+	None Permission = iota
 	Read
 	ReadProtected
 	Write
 	Grant
 )
 
-func (p Rights) String() string {
+func (p Permission) String() string {
 	if p & None == None {
 		return "None"
 	} else if p & Read == Read {
@@ -25,6 +25,8 @@ func (p Rights) String() string {
 
 	return "Unknown"
 }
+
+type Permissions []Permission
 
 type state int
 

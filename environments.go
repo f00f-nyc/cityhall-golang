@@ -2,15 +2,18 @@ package cityhall
 
 import (
 	"fmt"
+	"encoding/json"
 )
 
-type EnvironmentRights struct {
+type EnvironmentRight struct {
 	User string
-	Rights Rights
+	Permission Permission
 }
 
+type EnvironmentRights []EnvironmentRight
+
 type EnvironmentInfo struct {
-	Rights []EnvironmentRights
+	Rights EnvironmentRights
 }
 
 type Environments struct {
@@ -47,5 +50,24 @@ func (e *Environments) Create(environment string) error {
 }
 
 func (e *Environments) Get(environment string) (EnvironmentInfo, error) {
-	return EnvironmentInfo{}, nil
+	get_url := fmt.Sprintf("%s/auth/env/%s/", e.parent.Url, environment)
+	env_bytes, err := e.parent.createCall("GET", get_url, "")
+
+	if err != nil {
+		return EnvironmentInfo{}, err
+	}
+
+	var env_resp interface{}
+	if err = json.Unmarshal(env_bytes, &env_resp); err != nil {
+		return EnvironmentInfo{}, err
+	}
+	env_map := env_resp.(map[string]interface{})
+	users_map := env_map["Users"].(map[string]interface{})
+	var ret EnvironmentRights
+	for user, rights := range users_map {
+		permission := Permission((rights.(float64)))
+		ret = append(ret, EnvironmentRight{User: user, Permission: permission})
+	}
+
+	return EnvironmentInfo{Rights: ret}, nil
 }

@@ -79,14 +79,14 @@ func (s *Settings) createCall(method string, url string, body string) ([]byte, e
 		return []byte{}, err
 	}
 
-	var json []byte
+	var json_bytes []byte
 	if len(body) > 0 {
-		json = []byte(body)
+		json_bytes = []byte(body)
 	} else {
-		json = []byte{}
+		json_bytes = []byte{}
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(json))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(json_bytes))
 	if err != nil {
 		return []byte{}, err
 	}

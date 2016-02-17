@@ -1,7 +1,7 @@
 package cityhall
 
 type UserInfo struct {
-	UserRights []Rights
+	UserRights Permissions
 }
 
 type Users struct {
@@ -19,6 +19,6 @@ func (u *Users) DeleteUser(username string) error {
 	return nil
 }
 
-func (u *Users) Grant(username string, environment string, rights Rights) error {
+func (u *Users) Grant(username string, environment string, rights Permission) error {
 	return nil
 }
