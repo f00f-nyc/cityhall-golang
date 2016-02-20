@@ -55,6 +55,7 @@ func NewSettings(info CityHallInfo) (*Settings, error) {
 	}
 	settings.Environments.parent = settings
 	settings.Users.parent = settings
+	settings.Values.parent = settings
 
 	return settings, nil
 }

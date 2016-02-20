@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"os"
+	"strings"
 )
 
 type mockServer struct {
@@ -61,8 +62,39 @@ func (m *mockServer) createMockWithLogin(t *testing.T) *httptest.Server {
 					fmt.Fprintln(w, "{\"Response\": \"Ok\", \"value\":\"dev\"}")
 				} else {
 					if len(m.Path) > 0 {
-						if m.Path != r.URL.Path {
-							t.Errorf("Invalid path.  Expected '%s', but got '%s'", m.Path, r.URL.Path)
+						url := m.Path
+						url_end := strings.IndexAny(m.Path, "?")
+						if url_end >= 0 {
+							url = m.Path[0:url_end]
+						}
+						if url != r.URL.Path {
+							t.Errorf("Invalid path.  Expected '%s', but got '%s'", url, r.URL.Path)
+						}
+						if url_end >= 0 {
+							split_1 := func(c rune) bool {
+								return c == '&'
+							}
+							split_2 := func(c rune) bool {
+								return c == '='
+							}
+							url_params := m.Path[url_end+1:]
+							params := strings.FieldsFunc(url_params, split_1)
+							expected := r.URL.Query()
+
+							if len(expected) != len(params) {
+								t.Fatalf("Expected a different number of params")
+							}
+
+							for i := 0; i < len(params); i++ {
+								param := strings.FieldsFunc(params[i], split_2)
+								if val, ok := expected[param[0]]; ok {
+									if val[0] != param[1] {
+										t.Fatalf("For param %s, expected '%s' but got '%s'", param[0], param[1], val)
+									}
+								} else {
+									t.Fatal("Expected param ", param[0])
+								}
+							}
 						}
 					}
 

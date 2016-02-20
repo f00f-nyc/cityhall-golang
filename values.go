@@ -2,6 +2,8 @@ package cityhall
 
 import (
 	"time"
+	"strings"
+	"fmt"
 )
 
 type Value struct {
@@ -39,11 +41,43 @@ type Children struct {
 }
 
 type Values struct {
+	parent *Settings
+}
 
+func sanitizePath(path string) string {
+	if len(path) == 0 {
+		return "/"
+	}
+
+	var ret string
+	ret = path
+	if !strings.HasPrefix(path, "/") {
+		ret = "/" + path
+	}
+	if !strings.HasSuffix(path, "/") {
+		ret = ret + "/"
+	}
+	return ret
 }
 
 func (v *Values) GetRaw(environment string, path string, args map[string]string) (string, error) {
-	return "", nil
+	get_url := fmt.Sprintf("%s/env/%s%s", v.parent.Url, environment, sanitizePath(path))
+
+	if len(args) > 0 {
+		get_url = get_url + "?"
+
+		for key, value := range args {
+			get_url = fmt.Sprintf("%s%s=%s&", get_url, key, value)
+		}
+	}
+
+	env_bytes, err := v.parent.createCall("GET", get_url, "")
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(env_bytes), nil
 }
 
 func (v *Values) SetRaw(environment string, path string, value Value, override string) error {

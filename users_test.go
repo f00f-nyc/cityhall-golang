@@ -94,5 +94,5 @@ func TestGrantUser(t *testing.T) {
 	}
 
 	harness.testBadResultFailsGracefully(test_func)
-	harness.testCallFailnLoggedOut(test_func)
+	harness.testCallFailsWhenLoggedOut(test_func)
 }
