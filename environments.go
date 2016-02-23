@@ -3,11 +3,31 @@ package cityhall
 import (
 	"fmt"
 	"encoding/json"
+	"bytes"
+	"net/http"
 )
 
 type Environments struct {
 	defaultEnvironment string
 	parent *Settings
+}
+
+func (e *Environments) getDefault() error {
+	default_env_url := e.parent.Url + "/auth/user/" + e.parent.username + "/default/"
+	req, _ := http.NewRequest("GET", default_env_url, bytes.NewBuffer([]byte{}))
+	req.Header.Set("Content-Type", "application/json")
+
+	get_url := fmt.Sprintf("%s/auth/user/%s/default/", e.parent.Url, e.parent.username)
+	body, err := e.parent.createCall("GET", get_url, "")
+	if err != nil {
+		return err
+	}
+
+	if e.defaultEnvironment, err = getValueFromResponse(body); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *Environments) Default() string {

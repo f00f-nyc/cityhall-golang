@@ -20,7 +20,7 @@ func TestGetDefaultEnvironment(t *testing.T) {
 	defer cityhall.Close()
 
 	s, _ := NewSettings(CityHallInfo{Url: cityhall.URL})
-	err := s.getDefaultEnvironment()
+	err := s.Environments.getDefault()
 	if err != nil {
 		t.Fatal("getDefaultEnvironment should've GET at /auth/user/{hostname}/default/: %s", err)
 	}

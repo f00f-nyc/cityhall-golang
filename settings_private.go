@@ -39,24 +39,6 @@ func (s *Settings) login() error {
 	return nil
 }
 
-func (s *Settings) getDefaultEnvironment() error {
-	default_env_url := s.Url + "/auth/user/" + s.username + "/default/"
-	req, _ := http.NewRequest("GET", default_env_url, bytes.NewBuffer([]byte{}))
-	req.Header.Set("Content-Type", "application/json")
-
-	raw_resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	value, valueOk := getValueFromResponse(raw_resp.Body)
-	if valueOk != nil {
-		return valueOk
-	}
-	s.Environments.defaultEnvironment = value
-	return nil
-}
-
 func (s *Settings) ensureLoggedIn() error {
 	if s.loggedIn == loggedOut {
 		return cityhallError(fmt.Sprintf("User %s has already been logged out", s.username))
@@ -66,7 +48,7 @@ func (s *Settings) ensureLoggedIn() error {
 		if err := s.login(); err != nil {
 			return err
 		}
-		if err := s.getDefaultEnvironment(); err != nil {
+		if err := s.Environments.getDefault(); err != nil {
 			return err
 		}
 	}
