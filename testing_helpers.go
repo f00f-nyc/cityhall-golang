@@ -29,7 +29,7 @@ func log(str string) {
 }
 
 func logAny(object interface{}) {
-	fmt.Printf("%s\n", object)
+	fmt.Printf("%v\n", object)
 }
 
 func (m *mockServer) createMockWithLogin(t *testing.T) *httptest.Server {
@@ -79,20 +79,25 @@ func (m *mockServer) createMockWithLogin(t *testing.T) *httptest.Server {
 							}
 							url_params := m.Path[url_end+1:]
 							params := strings.FieldsFunc(url_params, split_1)
-							expected := r.URL.Query()
+							actual := r.URL.Query()
 
-							if len(expected) != len(params) {
+							if len(actual) != len(params) {
 								t.Fatalf("Expected a different number of params")
 							}
 
 							for i := 0; i < len(params); i++ {
 								param := strings.FieldsFunc(params[i], split_2)
-								if val, ok := expected[param[0]]; ok {
-									if val[0] != param[1] {
-										t.Fatalf("For param %s, expected '%s' but got '%s'", param[0], param[1], val)
+								param_name := param[0]
+								param_value := ""
+								if len(param) > 1 {
+									param_value = param[1]
+								}
+								if val, ok := actual[param_name]; ok {
+									if val[0] != param_value {
+										t.Fatalf("For param %s, expected '%s' but got '%s'", param_name, param_value, val[0])
 									}
 								} else {
-									t.Fatal("Expected param ", param[0])
+									t.Fatal("Expected param ", param_value)
 								}
 							}
 						}

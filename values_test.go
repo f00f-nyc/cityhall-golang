@@ -177,6 +177,107 @@ func TestGetRawChildren(t *testing.T) {
 	harness.testCallFailsWhenLoggedOut(test_func)
 }
 
+func TestSetRawRequiresThingToSet(t *testing.T) {
+	settings := (&mockServer{}).createHarness(t)
+	err := settings.Values.SetRaw("dev", "value1", Value{Value: nil, Protect: nil}, "")
+	if err == nil {
+		t.Fatal("Expected an error from SetRaw(), are attempting to execute a no-op")
+	}
+}
+
+func TestSetRawValueNoOverride(t *testing.T) {
+	harness := &mockServer{
+		Path: "/env/dev/value1/?override=",
+		Method: "POST",
+		RequestBody: `{"value": "some value"}`,
+	}
+	settings := harness.createHarness(t)
+	s := "some value"
+	value := Value{Value: &s}
+	test_func := func () error { return settings.Values.SetRaw("dev", "value1", value, "")}
+
+	err := test_func()
+	if err != nil {
+		t.Fatal("SetRaw value returned an error")
+	}
+	if settings.loggedIn != loggedIn {
+		t.Errorf("Calls should automatically log the user in")
+	}
+
+	harness.testBadResultFailsGracefully(test_func)
+	harness.testCallFailsWhenLoggedOut(test_func)
+}
+
+func TestSetRawProtectNoOverride(t *testing.T) {
+	harness := &mockServer{
+		Path: "/env/dev/value1/?override=",
+		Method: "POST",
+		RequestBody: `{"protect": true}`,
+	}
+	settings := harness.createHarness(t)
+	p := true
+	value := Value{Protect: &p}
+	test_func := func () error { return settings.Values.SetRaw("dev", "value1", value, "")}
+
+	err := test_func()
+	if err != nil {
+		t.Fatal("SetRaw value returned an error")
+	}
+	if settings.loggedIn != loggedIn {
+		t.Errorf("Calls should automatically log the user in")
+	}
+
+	harness.testBadResultFailsGracefully(test_func)
+	harness.testCallFailsWhenLoggedOut(test_func)
+}
+
+func TestSetRawValueAndProtectNoOverride(t *testing.T) {
+	harness := &mockServer{
+		Path: "/env/dev/value1/?override=",
+		Method: "POST",
+		RequestBody: `{"value": "some value", "protect": true}`,
+	}
+	settings := harness.createHarness(t)
+	s := "some value"
+	p := true
+	value := Value{Value: &s, Protect: &p}
+	test_func := func () error { return settings.Values.SetRaw("dev", "value1", value, "")}
+
+	err := test_func()
+	if err != nil {
+		t.Fatal("SetRaw value returned an error")
+	}
+	if settings.loggedIn != loggedIn {
+		t.Errorf("Calls should automatically log the user in")
+	}
+
+	harness.testBadResultFailsGracefully(test_func)
+	harness.testCallFailsWhenLoggedOut(test_func)
+}
+
+func TestSetRawWithOverride(t *testing.T) {
+	harness := &mockServer{
+		Path: "/env/dev/value1/?override=cityhall",
+		Method: "POST",
+		RequestBody: `{"value": "some value", "protect": true}`,
+	}
+	settings := harness.createHarness(t)
+	s := "some value"
+	p := true
+	value := Value{Value: &s, Protect: &p}
+	test_func := func () error { return settings.Values.SetRaw("dev", "value1", value, "cityhall")}
+
+	err := test_func()
+	if err != nil {
+		t.Fatal("SetRaw value returned an error")
+	}
+	if settings.loggedIn != loggedIn {
+		t.Errorf("Calls should automatically log the user in")
+	}
+
+	harness.testBadResultFailsGracefully(test_func)
+	harness.testCallFailsWhenLoggedOut(test_func)
+}
 
 
 

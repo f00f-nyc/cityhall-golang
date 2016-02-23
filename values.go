@@ -7,8 +7,8 @@ import (
 )
 
 type Value struct {
-	Value string
-	Protect bool
+	Value *string
+	Protect *bool
 }
 
 type Entry struct {
@@ -60,16 +60,22 @@ func sanitizePath(path string) string {
 	return ret
 }
 
-func (v *Values) GetRaw(environment string, path string, args map[string]string) (string, error) {
-	get_url := fmt.Sprintf("%s/env/%s%s", v.parent.Url, environment, sanitizePath(path))
+func (v *Values) urlFromItems(environment string, path string, args map[string]string) string {
+	ret_url := fmt.Sprintf("%s/env/%s%s", v.parent.Url, environment, sanitizePath(path))
 
 	if len(args) > 0 {
-		get_url = get_url + "?"
+		ret_url = ret_url + "?"
 
 		for key, value := range args {
-			get_url = fmt.Sprintf("%s%s=%s&", get_url, key, value)
+			ret_url = fmt.Sprintf("%s%s=%s&", ret_url, key, value)
 		}
 	}
+
+	return ret_url
+}
+
+func (v *Values) GetRaw(environment string, path string, args map[string]string) (string, error) {
+	get_url := v.urlFromItems(environment, path, args)
 
 	env_bytes, err := v.parent.createCall("GET", get_url, "")
 
@@ -81,7 +87,24 @@ func (v *Values) GetRaw(environment string, path string, args map[string]string)
 }
 
 func (v *Values) SetRaw(environment string, path string, value Value, override string) error {
-	return nil
+	args := make(map[string]string)
+	args["override"] = override
+	post_url := v.urlFromItems(environment, path, args)
+	json_str := ""
+
+	if value.Protect == nil && value.Value == nil {
+		return cityhallError("Must set Protect and/or Value")
+	} else if value.Protect == nil && value.Value != nil {
+		json_str = fmt.Sprintf(`{"value": "%s"}`, *value.Value)
+	} else if value.Protect != nil && value.Value == nil {
+		json_str = fmt.Sprintf(`{"protect": %v}`, *value.Protect)
+	} else {
+		json_str = fmt.Sprintf(`{"value": "%s", "protect": %v}`, *value.Value, *value.Protect)
+	}
+
+	_, err := v.parent.createCall("POST", post_url, json_str)
+
+	return err
 }
 
 func (v *Values) SetValue(environment string, path string, value string, override string) error {
