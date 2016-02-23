@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 )
 
-type EnvironmentInfo struct {
-	Rights EnvironmentRights
-}
-
 type Environments struct {
 	defaultEnvironment string
 	parent *Settings

@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 )
 
-type UserInfo struct {
-	Rights UserRights
-}
-
 type Users struct {
 	parent *Settings
 }

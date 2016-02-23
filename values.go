@@ -1,45 +1,10 @@
 package cityhall
 
 import (
-	"time"
 	"strings"
 	"fmt"
 	"encoding/json"
 )
-
-type Value struct {
-	Value *string
-	Protect *bool
-}
-
-type Entry struct {
-	Id int
-	Name string
-	Value string
-	Author string
-	DateTime time.Time
-	Active bool
-	Protect bool
-	Override string
-}
-
-type History struct {
-	Entries []Entry
-}
-
-type Child struct {
-	Id int
-	Name string
-	Override string
-	Path string
-	Value string
-	Protect bool
-}
-
-type Children struct {
-	Path string
-	SubChildren []Child
-}
 
 type Values struct {
 	parent *Settings
