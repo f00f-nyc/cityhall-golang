@@ -4,6 +4,7 @@ import (
 	"time"
 	"strings"
 	"fmt"
+	"encoding/json"
 )
 
 type Value struct {
@@ -108,21 +109,58 @@ func (v *Values) SetRaw(environment string, path string, value Value, override s
 }
 
 func (v *Values) SetValue(environment string, path string, value string, override string) error {
-	return nil
+	return v.SetRaw(environment, path, Value{Value:&value}, override)
 }
 
 func (v *Values) SetProtect(environment string, path string, protect bool, override string) error {
-	return nil
+	return v.SetRaw(environment, path, Value{Protect:&protect}, override)
 }
 
 func (v *Values) Delete(environment string, path string, override string) error {
-	return nil
+	args := make(map[string]string)
+	args["override"] = override
+	delete_url := v.urlFromItems(environment, path, args)
+	_, err := v.parent.createCall("DELETE", delete_url, "")
+	return err
 }
 
 func (v *Values) GetHistory(environment string, path string, override string) (History, error) {
-	return History{}, nil
+	args := make(map[string]string)
+	args["viewhistory"] = "true"
+	args["override"] = override
+	json_str, err := v.GetRaw(environment, path, args)
+	if err != nil {
+		return History{}, err
+	}
+
+	//History.History isn't as readable, so this temporary type will be used for unmarshaling
+	type history_resp struct {
+		History []Entry
+	}
+	var response history_resp
+	if err = json.Unmarshal([]byte(json_str), &response); err != nil {
+		return History{}, err
+	}
+	return History{Entries:response.History}, nil
 }
 
 func (v *Values) GetChildren(environment string, path string) (Children, error) {
-	return Children{}, nil
+	args := make(map[string]string)
+	args["viewchildren"] = "true"
+	json_str, err := v.GetRaw(environment, path, args)
+	if err != nil {
+		return Children{}, err
+	}
+
+	//Children.Children isn't as readable, so this temporary type will be used for unmarshaling
+	type children_resp struct {
+		Path string
+		Children []Child
+	}
+	var response children_resp
+	if err = json.Unmarshal([]byte(json_str), &response); err != nil {
+		return Children{}, err
+	}
+
+	return Children{Path:response.Path, SubChildren:response.Children}, nil
 }
