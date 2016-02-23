@@ -5,6 +5,7 @@ import (
 	"sync"
 	"net/http/cookiejar"
 	"os"
+	"fmt"
 )
 
 type CityHallInfo struct {
@@ -61,19 +62,53 @@ func NewSettings(info CityHallInfo) (*Settings, error) {
 }
 
 func (s *Settings) GetValueFull(path string, environment string, override string) (string, error) {
-	return "", nil
+	args := make(map[string]string)
+	args["override"] = override
+	json, err := s.Values.GetRaw(environment, path, args)
+	if err != nil {
+		return "", err
+	}
+	val, err_val := getValueFromResponse([]byte(json))
+	if err_val != nil {
+		return "", err_val
+	}
+	return val, nil
 }
 
 func (s *Settings) GetValue(path string) (string, error) {
-	return s.GetValueFull(path, "", "")
+	args := make(map[string]string)
+	if err_login := s.ensureLoggedIn(); err_login != nil {
+		return "", err_login
+	}
+	json, err := s.Values.GetRaw(s.Environments.Default(), path, args)
+	if err != nil {
+		return "", err
+	}
+	val, err_val := getValueFromResponse([]byte(json))
+	if err_val != nil {
+		return "", err_val
+	}
+	return val, nil
 }
 
 func (s *Settings) GetValueEnvironment(path string, environment string) (string, error) {
-	return s.GetValueFull(path, environment, "")
+	args := make(map[string]string)
+	json, err := s.Values.GetRaw(environment, path, args)
+	if err != nil {
+		return "", err
+	}
+	val, err_val := getValueFromResponse([]byte(json))
+	if err_val != nil {
+		return "", err_val
+	}
+	return val, nil
 }
 
 func (s *Settings) GetValueOverride(path string, override string) (string, error) {
-	return s.GetValueFull(path, "", override)
+	if err_login := s.ensureLoggedIn(); err_login != nil {
+		return "", err_login
+	}
+	return s.GetValueFull(path, s.Environments.Default(), override)
 }
 
 func (s *Settings) LoggedIn() bool {
@@ -81,9 +116,30 @@ func (s *Settings) LoggedIn() bool {
 }
 
 func (s *Settings) UpdatePassword(password string) error {
-	return nil
+	if err_login := s.ensureLoggedIn(); err_login != nil {
+		return err_login
+	}
+
+	update_url := fmt.Sprintf("%s/auth/user/%s/", s.Url, s.username)
+	update_json := fmt.Sprintf(`{"passhash": "%s"}`, hash(password))
+	_, err := s.createCall("PUT", update_url, update_json);
+	return err
 }
 
 func (s *Settings) Logout() error {
+	if s.loggedIn != loggedIn {
+		return cityhallError("Cannot log out when not already logged in")
+	}
+
+	logout_url := fmt.Sprintf("%s/auth/", s.Url)
+	_, err := s.createCall("DELETE", logout_url, "")
+	if err != nil {
+		return err
+	}
+
+	s.syncObject.Lock()
+	s.loggedIn = loggedOut
+	s.syncObject.Unlock()
+
 	return nil
 }
