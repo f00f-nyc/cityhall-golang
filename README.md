@@ -16,7 +16,7 @@ go get github.com/f00f-nyc/cityhall-golang/
  command to be familiar with:
 
 ```go
-settings, _ := cityhall.NewSettings(CityHallInfo{Url: "http://path.to.server/api"})
+settings, _ := cityhall.NewSettingsFromUrl("http://path.to.server/api")
 val, _ := settings.GetVal("/test/val1")
 ```
 

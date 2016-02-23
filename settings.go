@@ -6,6 +6,7 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"fmt"
+	"strings"
 )
 
 type CityHallInfo struct {
@@ -59,6 +60,13 @@ func NewSettings(info CityHallInfo) (*Settings, error) {
 	settings.Values.parent = settings
 
 	return settings, nil
+}
+
+func NewSettingsFromUrl(url string) (*Settings, error) {
+	if strings.HasSuffix(url, "/") {
+		return NewSettings(CityHallInfo{Url:strings.TrimRight(url, "/")})
+	}
+	return NewSettings(CityHallInfo{Url:url})
 }
 
 func (s *Settings) GetValueFull(path string, environment string, override string) (string, error) {

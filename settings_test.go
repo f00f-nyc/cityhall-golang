@@ -148,3 +148,13 @@ func TestLogout(t *testing.T) {
 		t.Fatal("The state should be loggedOut")
 	}
 }
+
+func TestSettingsFromUrl(t *testing.T) {
+	settings, err := NewSettingsFromUrl("http://not.a.real.url/api/")
+	if err != nil {
+		t.Fatal("Got an error back from NewSettings")
+	}
+	if settings.Url != "http://not.a.real.url/api" {
+		t.Fatal("Setting an Url should remove trailing slash")
+	}
+}
